@@ -32,7 +32,8 @@ CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 # ------------------ Database Configuration ------------------
-DB_URL = "postgresql://neondb_owner:npg_7SjyKhDinEv8@ep-young-term-a5zyo5in-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require"
+# DB_URL = "postgresql://neondb_owner:npg_7SjyKhDinEv8@ep-young-term-a5zyo5in-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require"
+DB_URL = os.environ.get("DATABASE_URL")
 
 # ------------------ In-Memory Cache (synced with DB) ------------------
 online_users = set()
@@ -41,7 +42,8 @@ cache_loaded = False
 
 # ------------------ Google Sheets Configuration ------------------
 SHEET_ID = "1YeAVnMLPV5nfRE1hUbqyqmhXbBbcKzQC1JK86gPQEiY"
-CREDENTIALS_FILE = "credentials.json"
+# CREDENTIALS_FILE = "credentials.json"
+CREDENTIALS_FILE = os.environ.get("GOOGLE_CREDENTIALS_PATH", "credentials.json")
 
 # ------------------ Password Hashing ------------------
 def hash_password(password):
@@ -597,3 +599,4 @@ if __name__ == '__main__':
     print("Starting Keyword Selection App...")
     print("Open http://localhost:5000 in your browser")
     socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+
