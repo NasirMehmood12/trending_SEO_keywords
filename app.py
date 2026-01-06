@@ -1,3 +1,5 @@
+import eventlet
+eventlet.monkey_patch()
 import sys
 import io
 # Fix Windows console encoding for Unicode
@@ -13,8 +15,7 @@ import json
 import os
 import psycopg2
 import hashlib
-import eventlet
-eventlet.monkey_patch()
+
 
 # Pakistan Standard Time (UTC+5)
 PKT = timezone(timedelta(hours=5))
@@ -601,5 +602,6 @@ if __name__ == '__main__':
     print("Starting Keyword Selection App...")
     print("Open http://localhost:5000 in your browser")
     socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+
 
 
