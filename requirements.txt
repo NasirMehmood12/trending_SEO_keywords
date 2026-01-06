@@ -15,4 +15,6 @@ flask
 flask-socketio
 flask-cors
 gspread
+
 oauth2client
+gunicorn
