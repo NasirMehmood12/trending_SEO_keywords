@@ -45,8 +45,8 @@ cache_loaded = False
 
 # ------------------ Google Sheets Configuration ------------------
 SHEET_ID = "1YeAVnMLPV5nfRE1hUbqyqmhXbBbcKzQC1JK86gPQEiY"
-# CREDENTIALS_FILE = "credentials.json"
-CREDENTIALS_FILE = os.environ.get("GOOGLE_CREDENTIALS_PATH", "credentials.json")
+CREDENTIALS_FILE = "credentials.json"
+# CREDENTIALS_FILE = os.environ.get("GOOGLE_CREDENTIALS_PATH", "credentials.json")
 
 # ------------------ Password Hashing ------------------
 def hash_password(password):
@@ -602,6 +602,7 @@ if __name__ == '__main__':
     print("Starting Keyword Selection App...")
     print("Open http://localhost:5000 in your browser")
     socketio.run(app, host='0.0.0.0', port=10000, debug=False)
+
 
 
 
