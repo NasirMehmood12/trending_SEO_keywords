@@ -1063,8 +1063,8 @@ def get_google_sheet_data():
                 {"id": 5, "keyword": "Sample Keyword 5", "title": "Market Analysis", "remarks": "Rising", "category": "Business", "hours_ago": "3h ago", "date": "07-01-2026", "time": "13:30:00"},
             ]
         
-        # creds = ServiceAccountCredentials.from_json_keyfile_name(GOOGLE_CREDENTIALS_JSON, scope)
-        creds = ServiceAccountCredentials.from_json_keyfile_name(CREDS_FILE, scope)
+        creds = ServiceAccountCredentials.from_json_keyfile_name(GOOGLE_CREDENTIALS_JSON, scope)
+        # creds = ServiceAccountCredentials.from_json_keyfile_name(CREDS_FILE, scope)
 
         client = gspread.authorize(creds)
         sheet = client.open_by_key(SHEET_ID).sheet1
@@ -1304,6 +1304,7 @@ if __name__ == '__main__':
     print("Starting Keyword Selection App...")
     print("Open http://localhost:5000 in your browser")
     socketio.run(app, host='0.0.0.0', port=10000, debug=False)
+
 
 
 
