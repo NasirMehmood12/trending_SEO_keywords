@@ -1,5 +1,5 @@
-# import eventlet
-# eventlet.monkey_patch()
+import eventlet
+eventlet.monkey_patch()
 import sys
 import io
 # Fix Windows console encoding for Unicode
@@ -602,6 +602,7 @@ if __name__ == '__main__':
     print("Starting Keyword Selection App...")
     print("Open http://localhost:5000 in your browser")
     socketio.run(app, host='0.0.0.0', port=10000, debug=False)
+
 
 
 
