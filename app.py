@@ -710,10 +710,10 @@ SHEET_ID = "1YeAVnMLPV5nfRE1hUbqyqmhXbBbcKzQC1JK86gPQEiY"
 # ------------------ Google Credentials (FIXED) ------------------
 GOOGLE_CREDENTIALS_JSON = os.environ.get("GOOGLE_CREDENTIALS_PATH")
 
-CREDS_FILE = None
+_FILE = None
 if GOOGLE_CREDENTIALS_JSON:
-    CREDS_FILE = "/tmp/google_credentials.json"
-    with open(CREDS_FILE, "w") as f:
+    _FILE = "/tmp/google_credentials.json"
+    with open(_FILE, "w") as f:
         f.write(GOOGLE_CREDENTIALS_JSON)
 
 
@@ -1064,7 +1064,7 @@ def get_google_sheet_data():
             ]
         
         # creds = ServiceAccountCredentials.from_json_keyfile_name(GOOGLE_CREDENTIALS_JSON, scope)
-        ServiceAccountCredentials.from_json_keyfile_name(CREDS_FILE, scope)
+        creds = ServiceAccountCredentials.from_json_keyfile_name(CREDS_FILE, scope)
 
         client = gspread.authorize(creds)
         sheet = client.open_by_key(SHEET_ID).sheet1
@@ -1304,6 +1304,7 @@ if __name__ == '__main__':
     print("Starting Keyword Selection App...")
     print("Open http://localhost:5000 in your browser")
     socketio.run(app, host='0.0.0.0', port=10000, debug=False)
+
 
 
 
