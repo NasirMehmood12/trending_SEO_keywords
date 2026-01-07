@@ -678,7 +678,16 @@ cache_loaded = False
 # ------------------ Google Sheets Configuration ------------------
 SHEET_ID = "1YeAVnMLPV5nfRE1hUbqyqmhXbBbcKzQC1JK86gPQEiY"
 # CREDENTIALS_FILE = "credentials.json"
-GOOGLE_CREDENTIALS_JSON  = os.environ.get("GOOGLE_CREDENTIALS_PATH")
+# GOOGLE_CREDENTIALS_JSON  = os.environ.get("GOOGLE_CREDENTIALS_PATH")
+# ------------------ Google Credentials (FIXED) ------------------
+GOOGLE_CREDENTIALS_JSON = os.environ.get("GOOGLE_CREDENTIALS_PATH")
+
+CREDS_FILE = None
+if GOOGLE_CREDENTIALS_JSON:
+    CREDS_FILE = "/tmp/google_credentials.json"
+    with open(CREDS_FILE, "w") as f:
+        f.write(GOOGLE_CREDENTIALS_JSON)
+
 
 # ------------------ Password Hashing ------------------
 def hash_password(password):
@@ -985,7 +994,9 @@ def get_google_sheet_data():
             "https://www.googleapis.com/auth/drive"
         ]
         
-        if not os.path.exists(GOOGLE_CREDENTIALS_JSON):
+        # if not os.path.exists(GOOGLE_CREDENTIALS_JSON):
+        if not CREDS_FILE or not os.path.exists(CREDS_FILE):
+  
             # Sample data with separate date and time columns
             return [
                 {"id": 1, "keyword": "Sample Keyword 1", "title": "Breaking News Story", "remarks": "Hot topic", "category": "Tech", "hours_ago": "2h ago", "date": "05-01-2026", "time": "14:30:00"},
@@ -995,7 +1006,9 @@ def get_google_sheet_data():
                 {"id": 5, "keyword": "Sample Keyword 5", "title": "Market Analysis", "remarks": "Rising", "category": "Business", "hours_ago": "3h ago", "date": "07-01-2026", "time": "13:30:00"},
             ]
         
-        creds = ServiceAccountCredentials.from_json_keyfile_name(GOOGLE_CREDENTIALS_JSON, scope)
+        # creds = ServiceAccountCredentials.from_json_keyfile_name(GOOGLE_CREDENTIALS_JSON, scope)
+        ServiceAccountCredentials.from_json_keyfile_name(CREDS_FILE, scope)
+
         client = gspread.authorize(creds)
         sheet = client.open_by_key(SHEET_ID).sheet1
         
@@ -1234,6 +1247,7 @@ if __name__ == '__main__':
     print("Starting Keyword Selection App...")
     print("Open http://localhost:5000 in your browser")
     socketio.run(app, host='0.0.0.0', port=10000, debug=False)
+
 
 
 
