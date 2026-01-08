@@ -665,9 +665,8 @@
 
 
 
-
-
-
+import eventlet
+eventlet.monkey_patch()
 import sys
 import io
 # Fix Windows console encoding for Unicode
@@ -1289,6 +1288,7 @@ if __name__ == '__main__':
     print("Open http://localhost:5000 in your browser")
     # socketio.run(app, debug=True, host='0.0.0.0', port=5000)
     socketio.run(app, host='0.0.0.0', port=10000, debug=False)
+
 
 
 
