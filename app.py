@@ -1027,8 +1027,8 @@ def get_google_sheet_data():
             "https://www.googleapis.com/auth/drive"
         ]
         
-        print(f"[SHEET] Checking for credentials file: {CREDENTIALS_FILE}", flush=True)
-        print(f"[SHEET] Credentials file exists: {os.path.exists(CREDENTIALS_FILE)}", flush=True)
+        # print(f"[SHEET] Checking for credentials file: {CREDENTIALS_FILE}", flush=True)
+        # print(f"[SHEET] Credentials file exists: {os.path.exists(CREDENTIALS_FILE)}", flush=True)
         
         # if not os.path.exists(CREDENTIALS_FILE):
         # if not os.path.exists(GOOGLE_CREDENTIALS_JSON):
@@ -1288,6 +1288,7 @@ if __name__ == '__main__':
     print("Starting Keyword Selection App...")
     print("Open http://localhost:5000 in your browser")
     socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+
 
 
 
