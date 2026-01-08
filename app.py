@@ -1031,7 +1031,7 @@ def get_google_sheet_data():
         print(f"[SHEET] Credentials file exists: {os.path.exists(CREDENTIALS_FILE)}", flush=True)
         
         # if not os.path.exists(CREDENTIALS_FILE):
-        if not os.path.exists(GOOGLE_CREDENTIALS_JSON):
+        # if not os.path.exists(GOOGLE_CREDENTIALS_JSON):
         if not CREDS_FILE or not os.path.exists(CREDS_FILE):
             # Sample data with separate date and time columns
             return [
@@ -1288,6 +1288,7 @@ if __name__ == '__main__':
     print("Starting Keyword Selection App...")
     print("Open http://localhost:5000 in your browser")
     socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+
 
 
 
