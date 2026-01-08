@@ -1,3 +1,4 @@
+
 # import eventlet
 # eventlet.monkey_patch()
 # import sys
@@ -46,7 +47,16 @@
 # # ------------------ Google Sheets Configuration ------------------
 # SHEET_ID = "1YeAVnMLPV5nfRE1hUbqyqmhXbBbcKzQC1JK86gPQEiY"
 # # CREDENTIALS_FILE = "credentials.json"
-# CREDENTIALS_FILE = os.environ.get("GOOGLE_CREDENTIALS_PATH")
+# # GOOGLE_CREDENTIALS_JSON  = os.environ.get("GOOGLE_CREDENTIALS_PATH")
+# # ------------------ Google Credentials (FIXED) ------------------
+# GOOGLE_CREDENTIALS_JSON = os.environ.get("GOOGLE_CREDENTIALS_PATH")
+
+# CREDS_FILE = None
+# if GOOGLE_CREDENTIALS_JSON:
+#     CREDS_FILE = "/tmp/google_credentials.json"
+#     with open(CREDS_FILE, "w") as f:
+#         f.write(GOOGLE_CREDENTIALS_JSON)
+
 
 # # ------------------ Password Hashing ------------------
 # def hash_password(password):
@@ -274,6 +284,7 @@
 #             conn.close()
 
 
+
 # def db_get_all_selections():
 #     """Get all selections from database"""
 #     conn = None
@@ -381,7 +392,9 @@
 #             "https://www.googleapis.com/auth/drive"
 #         ]
         
-#         if not os.path.exists(CREDENTIALS_FILE):
+#         # if not os.path.exists(GOOGLE_CREDENTIALS_JSON):
+#         if not CREDS_FILE or not os.path.exists(CREDS_FILE):
+  
 #             # Sample data with separate date and time columns
 #             return [
 #                 {"id": 1, "keyword": "Sample Keyword 1", "title": "Breaking News Story", "remarks": "Hot topic", "category": "Tech", "hours_ago": "2h ago", "date": "05-01-2026", "time": "14:30:00"},
@@ -391,7 +404,10 @@
 #                 {"id": 5, "keyword": "Sample Keyword 5", "title": "Market Analysis", "remarks": "Rising", "category": "Business", "hours_ago": "3h ago", "date": "07-01-2026", "time": "13:30:00"},
 #             ]
         
-#         creds = ServiceAccountCredentials.from_json_keyfile_name(CREDENTIALS_FILE, scope)
+#         # creds = ServiceAccountCredentials.from_json_keyfile_name(GOOGLE_CREDENTIALS_JSON, scope)
+#         # creds = ServiceAccountCredentials.from_json_keyfile_name(CREDS_FILE, scope)
+#         creds = ServiceAccountCredentials.from_json_keyfile_name(CREDS_FILE, scope)
+
 #         client = gspread.authorize(creds)
 #         sheet = client.open_by_key(SHEET_ID).sheet1
         
@@ -652,14 +668,6 @@
 
 
 
-
-
-
-
-
-
-import eventlet
-eventlet.monkey_patch()
 import sys
 import io
 # Fix Windows console encoding for Unicode
@@ -675,7 +683,6 @@ import json
 import os
 import psycopg2
 import hashlib
-
 
 # Pakistan Standard Time (UTC+5)
 PKT = timezone(timedelta(hours=5))
@@ -695,7 +702,7 @@ CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 # ------------------ Database Configuration ------------------
-# DB_URL = "postgresql://neondb_owner:npg_7SjyKhDinEv8@ep-young-term-a5zyo5in-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require"
+DB_URL = "postgresql://neondb_owner:npg_7SjyKhDinEv8@ep-young-term-a5zyo5in-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require"
 DB_URL = os.environ.get("DATABASE_URL")
 
 # ------------------ In-Memory Cache (synced with DB) ------------------
@@ -706,8 +713,6 @@ cache_loaded = False
 # ------------------ Google Sheets Configuration ------------------
 SHEET_ID = "1YeAVnMLPV5nfRE1hUbqyqmhXbBbcKzQC1JK86gPQEiY"
 # CREDENTIALS_FILE = "credentials.json"
-# GOOGLE_CREDENTIALS_JSON  = os.environ.get("GOOGLE_CREDENTIALS_PATH")
-# ------------------ Google Credentials (FIXED) ------------------
 GOOGLE_CREDENTIALS_JSON = os.environ.get("GOOGLE_CREDENTIALS_PATH")
 
 CREDS_FILE = None
@@ -715,7 +720,6 @@ if GOOGLE_CREDENTIALS_JSON:
     CREDS_FILE = "/tmp/google_credentials.json"
     with open(CREDS_FILE, "w") as f:
         f.write(GOOGLE_CREDENTIALS_JSON)
-
 
 # ------------------ Password Hashing ------------------
 def hash_password(password):
@@ -893,31 +897,8 @@ def db_add_selection(username, team, keyword):
             cur.close()
             conn.close()
 
-# def db_remove_selection(username, keyword):
-#     """Remove a keyword selection from database"""
-#     conn = None
-#     try:
-#         conn = get_db_connection()
-#         cur = conn.cursor()
-        
-#         cur.execute(
-#             "DELETE FROM keyword_selections WHERE username = %s AND keyword = %s",
-#             (username, keyword)
-#         )
-#         conn.commit()
-#         return True
-        
-#     except Exception as e:
-#         print(f"[DB] Remove selection error: {e}")
-#         return False
-#     finally:
-#         if conn:
-#             cur.close()
-#             conn.close()
-
 def db_remove_selection(username, keyword):
     """Remove a keyword selection from database"""
-    global selections_cache
     conn = None
     try:
         conn = get_db_connection()
@@ -928,10 +909,6 @@ def db_remove_selection(username, keyword):
             (username, keyword)
         )
         conn.commit()
-        
-        # Update cache after deletion
-        selections_cache = db_get_all_selections()
-        
         return True
         
     except Exception as e:
@@ -941,8 +918,6 @@ def db_remove_selection(username, keyword):
         if conn:
             cur.close()
             conn.close()
-
-
 
 def db_get_all_selections():
     """Get all selections from database"""
@@ -1044,6 +1019,7 @@ def load_selections_cache():
 # ------------------ Google Sheets Function ------------------
 def get_google_sheet_data():
     """Fetch keywords from Google Sheet with all columns"""
+    print("[SHEET] Starting to fetch Google Sheet data...", flush=True)
     try:
         scope = [
             "https://spreadsheets.google.com/feeds",
@@ -1051,9 +1027,12 @@ def get_google_sheet_data():
             "https://www.googleapis.com/auth/drive"
         ]
         
-        # if not os.path.exists(GOOGLE_CREDENTIALS_JSON):
+        print(f"[SHEET] Checking for credentials file: {CREDENTIALS_FILE}", flush=True)
+        print(f"[SHEET] Credentials file exists: {os.path.exists(CREDENTIALS_FILE)}", flush=True)
+        
+        # if not os.path.exists(CREDENTIALS_FILE):
+        if not os.path.exists(GOOGLE_CREDENTIALS_JSON):
         if not CREDS_FILE or not os.path.exists(CREDS_FILE):
-  
             # Sample data with separate date and time columns
             return [
                 {"id": 1, "keyword": "Sample Keyword 1", "title": "Breaking News Story", "remarks": "Hot topic", "category": "Tech", "hours_ago": "2h ago", "date": "05-01-2026", "time": "14:30:00"},
@@ -1063,14 +1042,16 @@ def get_google_sheet_data():
                 {"id": 5, "keyword": "Sample Keyword 5", "title": "Market Analysis", "remarks": "Rising", "category": "Business", "hours_ago": "3h ago", "date": "07-01-2026", "time": "13:30:00"},
             ]
         
-        # creds = ServiceAccountCredentials.from_json_keyfile_name(GOOGLE_CREDENTIALS_JSON, scope)
-        # creds = ServiceAccountCredentials.from_json_keyfile_name(CREDS_FILE, scope)
-        creds = ServiceAccountCredentials.from_json_keyfile_name(CREDS_FILE, scope)
-
+        print("[SHEET] Loading credentials...", flush=True)
+        # creds = ServiceAccountCredentials.from_json_keyfile_name(CREDENTIALS_FILE, scope)
+        creds = ServiceAccountCredentials.from_json_keyfile_name(CREDS_FILE, scope)    
+        print("[SHEET] Authorizing with Google...", flush=True)
         client = gspread.authorize(creds)
+        print(f"[SHEET] Opening sheet with ID: {SHEET_ID}", flush=True)
         sheet = client.open_by_key(SHEET_ID).sheet1
-        
+        print("[SHEET] Fetching all records...", flush=True)
         records = sheet.get_all_records()
+        print(f"[SHEET] Found {len(records)} records", flush=True)
         keywords = []
         for i, record in enumerate(records):
             # Debug: Print column names from first record
@@ -1111,7 +1092,9 @@ def get_google_sheet_data():
             })
         return keywords
     except Exception as e:
-        print(f"Error fetching Google Sheet: {e}")
+        print(f"[SHEET ERROR] Error fetching Google Sheet: {e}", flush=True)
+        import traceback
+        traceback.print_exc()
         return [
             {"id": 1, "keyword": "Trending Topic 1", "title": "", "remarks": "", "category": "General", "hours_ago": "", "date": "", "time": ""},
             {"id": 2, "keyword": "Trending Topic 2", "title": "", "remarks": "", "category": "General", "hours_ago": "", "date": "", "time": ""},
@@ -1304,7 +1287,9 @@ if __name__ == '__main__':
     
     print("Starting Keyword Selection App...")
     print("Open http://localhost:5000 in your browser")
-    socketio.run(app, host='0.0.0.0', port=10000, debug=False)
+    socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+
+
 
 
 
