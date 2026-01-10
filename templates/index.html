@@ -5956,7 +5956,7 @@
 
             // Convert to array and sort by count (highest first), then by latest time
             const groupedKeywords = Object.values(keywordGroups).sort((a, b) => {
-                if (b.count !== a.count) return b.count - a.count;
+                // if (b.count !== a.count) return b.count - a.count;
                 return b.latestDate - a.latestDate;
             });
             
@@ -6320,6 +6320,7 @@
     </script>
 </body>
 </html>
+
 
 
 
