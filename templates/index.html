@@ -9414,21 +9414,9 @@
         </tr>
     `).join('');
 
-    // 6️⃣ Render pagination buttons
-//     renderSelectionsPagination(totalPages);
-// }
-// function renderSelectionsPagination(totalPages) {
-//     const container = document.getElementById('selectionsPagination');
-//     if (!container || totalPages <= 1) {
-//         container.innerHTML = '';
-//         return;
-//     }
-
-//     let html = '';
-
-
-
-
+    6️⃣ Render pagination buttons
+    renderSelectionsPagination(totalPages);
+}
 function renderSelectionsPagination(totalPages) {
     const container = document.getElementById('selectionsPagination');
     if (!container || totalPages <= 1) {
@@ -9436,46 +9424,58 @@ function renderSelectionsPagination(totalPages) {
         return;
     }
 
-    const maxVisiblePages = 5; // max number of page buttons to show at once
     let html = '';
 
-    // Previous button
-    html += `<button ${selectionsCurrentPage === 1 ? 'disabled' : ''} 
-                     onclick="goToSelectionsPage(${selectionsCurrentPage - 1})">Prev</button>`;
 
-    // Calculate start and end page numbers
-    let startPage = Math.max(1, selectionsCurrentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = startPage + maxVisiblePages - 1;
 
-    if (endPage > totalPages) {
-        endPage = totalPages;
-        startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
 
-    // First page + ellipsis if needed
-    if (startPage > 1) {
-        html += `<button onclick="goToSelectionsPage(1)">1</button>`;
-        if (startPage > 2) html += `<span>...</span>`;
-    }
+// function renderSelectionsPagination(totalPages) {
+//     const container = document.getElementById('selectionsPagination');
+//     if (!container || totalPages <= 1) {
+//         container.innerHTML = '';
+//         return;
+//     }
 
-    // Page numbers
-    for (let i = startPage; i <= endPage; i++) {
-        html += `<button class="${i === selectionsCurrentPage ? 'active' : ''}" 
-                         onclick="goToSelectionsPage(${i})">${i}</button>`;
-    }
+//     const maxVisiblePages = 5; // max number of page buttons to show at once
+//     let html = '';
 
-    // Last page + ellipsis if needed
-    if (endPage < totalPages) {
-        if (endPage < totalPages - 1) html += `<span>...</span>`;
-        html += `<button onclick="goToSelectionsPage(${totalPages})">${totalPages}</button>`;
-    }
+//     // Previous button
+//     html += `<button ${selectionsCurrentPage === 1 ? 'disabled' : ''} 
+//                      onclick="goToSelectionsPage(${selectionsCurrentPage - 1})">Prev</button>`;
 
-    // Next button
-    html += `<button ${selectionsCurrentPage === totalPages ? 'disabled' : ''} 
-                     onclick="goToSelectionsPage(${selectionsCurrentPage + 1})">Next</button>`;
+//     // Calculate start and end page numbers
+//     let startPage = Math.max(1, selectionsCurrentPage - Math.floor(maxVisiblePages / 2));
+//     let endPage = startPage + maxVisiblePages - 1;
 
-    container.innerHTML = html;
-}
+//     if (endPage > totalPages) {
+//         endPage = totalPages;
+//         startPage = Math.max(1, endPage - maxVisiblePages + 1);
+//     }
+
+//     // First page + ellipsis if needed
+//     if (startPage > 1) {
+//         html += `<button onclick="goToSelectionsPage(1)">1</button>`;
+//         if (startPage > 2) html += `<span>...</span>`;
+//     }
+
+//     // Page numbers
+//     for (let i = startPage; i <= endPage; i++) {
+//         html += `<button class="${i === selectionsCurrentPage ? 'active' : ''}" 
+//                          onclick="goToSelectionsPage(${i})">${i}</button>`;
+//     }
+
+//     // Last page + ellipsis if needed
+//     if (endPage < totalPages) {
+//         if (endPage < totalPages - 1) html += `<span>...</span>`;
+//         html += `<button onclick="goToSelectionsPage(${totalPages})">${totalPages}</button>`;
+//     }
+
+//     // Next button
+//     html += `<button ${selectionsCurrentPage === totalPages ? 'disabled' : ''} 
+//                      onclick="goToSelectionsPage(${selectionsCurrentPage + 1})">Next</button>`;
+
+//     container.innerHTML = html;
+// }
 
 
 
@@ -9846,6 +9846,7 @@ function goToSelectionsPage(page) {
     </script>
 </body>
 </html>
+
 
 
 
