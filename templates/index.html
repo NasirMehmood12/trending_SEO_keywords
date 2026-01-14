@@ -5213,7 +5213,7 @@
 
     <script>
         // Global State
-        const SELECTIONS_PER_PAGE = 20; // Number of items per page
+        const SELECTIONS_PER_PAGE = 40; // Number of items per page
         let selectionsCurrentPage = 1;  // Current page number
 
         let currentUser = null;
@@ -6213,6 +6213,7 @@
         function renderSelections() {
     const tbody = document.getElementById('selectionsTable');
 
+    updateTeamFilter();        
     // 1️⃣ Apply filters
     const filteredSelections = getFilteredSelections(); // your existing function
 
@@ -6726,6 +6727,7 @@ function goToSelectionsPage(page) {
     </script>
 </body>
 </html>
+
 
 
 
