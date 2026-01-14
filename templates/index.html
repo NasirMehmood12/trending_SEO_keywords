@@ -6300,6 +6300,28 @@
 //     }
 
 //     let html = '';
+   
+
+//     // Previous button
+//     html += `<button ${selectionsCurrentPage === 1 ? 'disabled' : ''}
+//                      onclick="goToSelectionsPage(${selectionsCurrentPage - 1})">Prev</button>`;
+
+//     // Page numbers
+//     for (let i = 1; i <= totalPages; i++) {
+//         html += `<button class="${i === selectionsCurrentPage ? 'active' : ''}"
+//                          onclick="goToSelectionsPage(${i})">${i}</button>`;
+//     }
+
+//     // Next button
+//     html += `<button ${selectionsCurrentPage === totalPages ? 'disabled' : ''}
+//                      onclick="goToSelectionsPage(${selectionsCurrentPage + 1})">Next</button>`;
+
+//     container.innerHTML = html;
+
+
+
+    
+// }
 
 
 
@@ -6363,24 +6385,7 @@
             
    
 
-    // Previous button
-    html += `<button ${selectionsCurrentPage === 1 ? 'disabled' : ''}
-                     onclick="goToSelectionsPage(${selectionsCurrentPage - 1})">Prev</button>`;
 
-    // Page numbers
-    for (let i = 1; i <= totalPages; i++) {
-        html += `<button class="${i === selectionsCurrentPage ? 'active' : ''}"
-                         onclick="goToSelectionsPage(${i})">${i}</button>`;
-    }
-
-    // Next button
-    html += `<button ${selectionsCurrentPage === totalPages ? 'disabled' : ''}
-                     onclick="goToSelectionsPage(${selectionsCurrentPage + 1})">Next</button>`;
-
-    container.innerHTML = html;
-
-    
-}
 function goToSelectionsPage(page) {
     selectionsCurrentPage = page;
     renderSelections();
@@ -6721,6 +6726,7 @@ function goToSelectionsPage(page) {
     </script>
 </body>
 </html>
+
 
 
 
