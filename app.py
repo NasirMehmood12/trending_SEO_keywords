@@ -1275,7 +1275,8 @@
 
 
 
-
+import eventlet
+eventlet.monkey_patch()
 
 
 import sys
@@ -1321,7 +1322,15 @@ cache_loaded = False
 
 # ------------------ Google Sheets Configuration ------------------
 SHEET_ID = "1YeAVnMLPV5nfRE1hUbqyqmhXbBbcKzQC1JK86gPQEiY"
-CREDENTIALS_FILE = "credentials.json"
+# CREDENTIALS_FILE = "credentials.json"
+GOOGLE_CREDENTIALS_JSON = os.environ.get("GOOGLE_CREDENTIALS_PATH")
+
+CREDS_FILE = None
+if GOOGLE_CREDENTIALS_JSON:
+    CREDS_FILE = "/tmp/google_credentials.json"
+    with open(CREDS_FILE, "w") as f:
+        f.write(GOOGLE_CREDENTIALS_JSON)
+
 
 # ------------------ Password Hashing ------------------
 def hash_password(password):
@@ -2003,10 +2012,10 @@ def get_google_sheet_data():
             "https://www.googleapis.com/auth/drive"
         ]
         
-        print(f"[SHEET] Checking for credentials file: {CREDENTIALS_FILE}", flush=True)
-        print(f"[SHEET] Credentials file exists: {os.path.exists(CREDENTIALS_FILE)}", flush=True)
+        print(f"[SHEET] Checking for credentials file: {CREDS_FILE}", flush=True)
+        print(f"[SHEET] Credentials file exists: {os.path.exists(CREDES_FILE)}", flush=True)
         
-        if not os.path.exists(CREDENTIALS_FILE):
+        if not os.path.exists(CREDS_FILE):
             # Sample data with separate date and time columns
             return [
                 {"id": 1, "keyword": "Sample Keyword 1", "title": "Breaking News Story", "remarks": "Hot topic", "category": "Tech", "hours_ago": "2h ago", "date": "05-01-2026", "time": "14:30:00", "seo": "Moiz"},
@@ -2017,7 +2026,7 @@ def get_google_sheet_data():
             ]
         
         print("[SHEET] Loading credentials...", flush=True)
-        creds = ServiceAccountCredentials.from_json_keyfile_name(CREDENTIALS_FILE, scope)
+        creds = ServiceAccountCredentials.from_json_keyfile_name(CREDS_FILE, scope)
         print("[SHEET] Authorizing with Google...", flush=True)
         client = gspread.authorize(creds)
         print(f"[SHEET] Opening sheet with ID: {SHEET_ID}", flush=True)
@@ -2516,6 +2525,7 @@ if __name__ == '__main__':
     print("Starting Keyword Selection App...")
     print("Open http://localhost:5000 in your browser")
     socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+
 
 
 
