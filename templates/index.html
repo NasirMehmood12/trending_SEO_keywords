@@ -1,5 +1,4 @@
 <!-- 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1587,7 +1586,7 @@
     </style>
 </head>
 <body>
- 
+   
     <header class="header">
         <div class="logo">SEO Suggested Keywords</div>
         <div class="header-actions">
@@ -1621,10 +1620,9 @@
         </div>
     </header>
 
-    
     <div class="auth-container" id="authSection">
         <div class="auth-card">
-            
+          
             <div id="loginForm">
                 <h2>Welcome Back</h2>
                 <p>Sign in to continue to the dashboard</p>
@@ -1663,7 +1661,7 @@
                 <p class="error-msg" id="loginError"></p>
             </div>
 
-         
+            
             <div id="forgotPasswordForm" class="hidden">
                 <h2>Reset Password</h2>
                 <p>Enter your username and team to verify identity</p>
@@ -1705,7 +1703,7 @@
                 <p class="success-msg" id="resetSuccess"></p>
             </div>
 
-      
+        
             <div id="registerForm" class="hidden">
                 <h2>Create Account</h2>
                 <p>Register to start selecting keywords</p>
@@ -1759,11 +1757,11 @@
         </div>
     </div>
 
- 
+   
     <div class="container dashboard" id="dashboard">
     
         <section class="keywords-section">
-         
+       
             <div class="search-hero">
                 <div class="search-container">
                     <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1775,7 +1773,7 @@
                 </div>
             </div>
 
-         
+  
             <div class="filters-row">
                 <div class="filters-left">
                     <div class="filter-chip-group">
@@ -1813,6 +1811,7 @@
                 </div>
             </div>
 
+          
             <div class="stats-row">
                 <div class="stat-card-new">
                     <div class="stat-icon-box blue">📊</div>
@@ -1843,25 +1842,24 @@
                     </div>
                 </div>
             </div>
-         
+            
             <span id="totalCount" style="display:none;">0</span>
             
-          
+      
             <div class="keywords-grid" id="keywordsGrid">
-                
+  
             </div>
             
-            
+
             <div class="pagination-container" id="keywordsPagination">
-         
+
             </div>
         </section>
 
-       
         <section class="selections-section">
             <h2 class="section-title">Picked Keywords</h2>
             
-            
+     
             <div class="filter-bar">
                 <div class="filter-group">
                     <label>From:</label>
@@ -1915,13 +1913,13 @@
         </section>
     </div>
 
-    
+
     <div class="toast" id="toast">
         <span class="toast-icon">✨</span>
         <span class="toast-message" id="toastMessage">Notification</span>
     </div>
 
-    
+
     <div class="modal-overlay" id="statsModal" onclick="closeStatsModal(event)">
         <div class="modal" onclick="event.stopPropagation()">
             <div class="modal-header">
@@ -1946,7 +1944,7 @@
         </div>
     </div>
 
-
+ 
     <div class="modal-overlay" id="keywordModal" onclick="closeModal(event)">
         <div class="modal" onclick="event.stopPropagation()">
             <div class="modal-header">
@@ -1966,7 +1964,7 @@
                 </div>
             </div>
             
-        
+    
             <div class="filter-bar" style="margin-bottom: 1rem;">
                 <div class="filter-group">
                     <label>From:</label>
@@ -1990,13 +1988,13 @@
             </div>
             
             <div class="modal-users-list" id="modalUsersList">
-        
+              
             </div>
         </div>
     </div>
 
 
-  
+
     <div id="usersModal" class="modal-overlay">
         <div class="modal" style="max-width: 500px;">
             <div class="modal-header">
@@ -2191,9 +2189,14 @@
             });
 
             socket.on('trends_flag_update', (data) => {
-                // Update local trendsFlags cache with all flaggers
-                if (data.flaggers && data.flaggers.length > 0) {
-                    trendsFlags[data.keyword] = data.flaggers;
+                // Only process updates for the current user's team
+                if (!currentUser || data.team !== currentUser.team) {
+                    return; // Ignore updates from other teams
+                }
+                
+                // Update local trendsFlags cache
+                if (data.action === 'flagged' && data.flag_info) {
+                    trendsFlags[data.keyword] = data.flag_info;
                 } else {
                     delete trendsFlags[data.keyword];
                 }
@@ -2202,7 +2205,7 @@
                 if (data.action === 'flagged') {
                     showToast(`${data.triggered_by} marked "${data.keyword}" as from Google Trends`, 'warning');
                 } else {
-                    showToast(`${data.triggered_by} removed their flag from "${data.keyword}"`, 'success');
+                    showToast(`${data.triggered_by} removed the flag from "${data.keyword}"`, 'success');
                 }
                 
                 // Re-render to update UI
@@ -2484,7 +2487,12 @@
 
         async function loadTrendsFlags() {
             try {
-                const res = await fetch('/api/trends-flags');
+                // Only load flags for the current user's team
+                if (!currentUser || !currentUser.team) {
+                    trendsFlags = {};
+                    return;
+                }
+                const res = await fetch(`/api/trends-flags?team=${encodeURIComponent(currentUser.team)}`);
                 const data = await res.json();
                 trendsFlags = data.flags || {};
                 renderKeywords(); // Re-render to show flag status
@@ -2772,57 +2780,33 @@
             grid.innerHTML = paginatedKeywords.map(kw => {
                 const isSelected = selections.some(s => s.user === currentUser?.name && s.keyword === kw.keyword);
                 const teamsSelected = getTeamsForKeyword(kw.keyword);
-                
-//                 // Generate team badges HTML
-//                 // const teamBadgesHTML = teamsSelected.length > 0 ? `
-//                 //     <div class="team-badges">
-//                 //         ${teamsSelected.map(team => {
-//                 //             const badge = getTeamBadge(team);
-//                 //             return `<span class="team-badge" style="background: ${badge.color};" title="Selected by ${team}">${badge.abbr}</span>`;
-//                 //         }).join('')}
-//                 //     </div>
-//                 // ` : '';
 
-//                // Generate team badges with user names instead of team names
-// const badgeSelections = selections.filter(s => s.keyword === kw.keyword);
-// const teamBadgesHTML = badgeSelections.length > 0 ? `
-//     <div class="team-badges">
-//         ${badgeSelections.map(s => {
-//             const badge = getTeamBadge(s.team);
-//             return `<span class="team-badge" style="background: ${badge.color};" title="Selected by ${s.user}">${badge.abbr}</span>`;
-//         }).join('')}
-//     </div>
-// ` : '';
+                // Generate team badges with click event to open modal
+                const badgeSelections = selections.filter(s => s.keyword === kw.keyword);
 
+                // Get unique teams that selected this keyword
+                const uniqueTeams = [...new Set(badgeSelections.map(s => s.team))];
 
-
-
-// Generate team badges with click event to open modal
-const badgeSelections = selections.filter(s => s.keyword === kw.keyword);
-
-// Get unique teams that selected this keyword
-const uniqueTeams = [...new Set(badgeSelections.map(s => s.team))];
-
-const teamBadgesHTML = uniqueTeams.length > 0 ? `
-    <div class="team-badges">
-        ${uniqueTeams.map(team => {
-            const badge = getTeamBadge(team);
-            const teamUsers = badgeSelections.filter(s => s.team === team);
-            const userNames = teamUsers.map(s => s.user).join(', ');
-            // Store keyword in a data attribute to avoid string escaping issues
-            return `<span 
-                class="team-badge" 
-                style="background: ${badge.color}; cursor:pointer; z-index:10;" 
-                title="Selected by: ${userNames}"
-                data-keyword="${encodeURIComponent(kw.keyword)}"
-                data-team="${encodeURIComponent(team)}"
-                onclick="event.stopPropagation(); openUserModalFromBadge(this)"
-            >
-                ${badge.abbr}
-            </span>`;
-        }).join('')}
-    </div>
-` : '';
+                const teamBadgesHTML = uniqueTeams.length > 0 ? `
+                    <div class="team-badges">
+                        ${uniqueTeams.map(team => {
+                            const badge = getTeamBadge(team);
+                            const teamUsers = badgeSelections.filter(s => s.team === team);
+                            const userNames = teamUsers.map(s => s.user).join(', ');
+                            // Store keyword in a data attribute to avoid string escaping issues
+                            return `<span 
+                                class="team-badge" 
+                                style="background: ${badge.color}; cursor:pointer; z-index:10;" 
+                                title="Selected by: ${userNames}"
+                                data-keyword="${encodeURIComponent(kw.keyword)}"
+                                data-team="${encodeURIComponent(team)}"
+                                onclick="event.stopPropagation(); openUserModalFromBadge(this)"
+                            >
+                                ${badge.abbr}
+                            </span>`;
+                        }).join('')}
+                    </div>
+                ` : '';
 
 
 
@@ -2845,32 +2829,24 @@ const teamBadgesHTML = uniqueTeams.length > 0 ? `
                                 ${kw.time ? `<span class="keyword-tag time">🕐 ${kw.time}</span>` : ''}
                             </div>
                         </div>
-                        <div class="keyword-info-flag">
-    ${(() => {
-        const flaggers = trendsFlags[kw.keyword] || [];
-        const userHasFlagged = flaggers.some(f => f.flagged_by === currentUser?.name);
-        
-        if (flaggers.length > 0) {
-            // Show all users who flagged this keyword
-            const names = flaggers.map(f => f.flagged_by).join(', ');
-            return `<div class="flagged-info" style="color: var(--accent-warning); font-size: 0.85rem;">
-                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                    <span style="font-size: 1rem;">⚠️</span>
-                    <span><strong>${names}</strong> ${flaggers.length === 1 ? 'has' : 'have'} already picked this story from Google Trends</span>
-                </div>
-                <div style="margin-top: 0.5rem; display: flex; align-items: center; gap: 0.75rem;">
-                    ${userHasFlagged 
-                        ? `<button onclick="toggleTrendsFlag('${kw.keyword.replace(/'/g, "\\'")}', event)" 
-                            style="background: none; border: 1px solid var(--accent-danger); color: var(--accent-danger); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer;"
-                            title="Remove your flag">Remove my flag</button>`
-                        : `<label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                            <input type="checkbox" onchange="toggleTrendsFlag('${kw.keyword.replace(/'/g, "\\'")}', event)" style="cursor: pointer;"/>
-                            <span style="font-size: 0.8rem; color: var(--text-secondary);">I also picked this from Google Trends</span>
-                        </label>`
-                    }
+            <div class="keyword-info-flag">
+                ${(() => {
+                    // Team-specific: one flag per keyword for your team
+                    const flag = trendsFlags[kw.keyword];
+                    
+                    if (flag) {
+                        // Your team has flagged this keyword
+                        return `<div class="flagged-info" style="color: var(--accent-warning); font-size: 0.85rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                <span style="font-size: 1rem;">⚠️</span>
+                                <span><strong>${flag.flagged_by}</strong> already picked this story from Google Trends</span>
+                                <button onclick="toggleTrendsFlag('${kw.keyword.replace(/'/g, "\\'")}', event)" 
+                                    style="background: none; border: 1px solid var(--accent-danger); color: var(--accent-danger); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; margin-left: auto;"
+                                    title="Remove flag">✕</button>
                 </div>
             </div>`;
         } else {
+            // No flag for your team yet
             return `<label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
                 <input
                     type="checkbox"
@@ -2894,12 +2870,13 @@ const teamBadgesHTML = uniqueTeams.length > 0 ? `
 
         function toggleTrendsFlag(keyword, event) {
             if (event) event.stopPropagation();
-            if (!currentUser) return;
+            if (!currentUser || !currentUser.team) return;
             
-            // Emit socket event to toggle the flag
+            // Emit socket event to toggle the flag (team-specific)
             socket.emit('toggle_trends_flag', {
                 username: currentUser.name,
-                keyword: keyword
+                keyword: keyword,
+                team: currentUser.team
             });
         }
 
@@ -2909,7 +2886,7 @@ function openUserModalFromBadge(element) {
     const keyword = decodeURIComponent(element.dataset.keyword);
     const team = decodeURIComponent(element.dataset.team);
     
-    // Find users directly here
+    // Find users who selected this keyword from this team
     const users = selections.filter(s => s.keyword === keyword && s.team === team);
     
     console.log('Badge clicked - Keyword:', keyword, 'Team:', team, 'Found:', users);
@@ -3197,7 +3174,7 @@ function getFilteredModalUsers() {
 //                     ${group.keyword}
 //                 </span>
 //             </td>
-//    
+//             
 //             <td>${teamBadgesHTML}</td>
 //             <td><span class="timestamp">${group.latestTime}</span></td>
 //         </tr>
@@ -3772,11 +3749,6 @@ function getFilteredModalUsers() {
     </script>
 </body>
 </html> -->
-
-
-
-
-
 
 
 
@@ -7179,66 +7151,68 @@ function getFilteredModalUsers() {
 
 
         function updateStats() {
-            // Check if any filter is applied
-            const hasFiltersApplied = isAnyFilterApplied();
+            // Check for date filter specifically
+            const fromDateFilter = document.getElementById('filterFromDate')?.value || '';
+            const toDateFilter = document.getElementById('filterToDate')?.value || '';
+            const hasDateFilter = fromDateFilter !== '' || toDateFilter !== '';
             
-            // Get the filtered keywords list
-            const filteredKeywords = getFilteredKeywords();
-            const filteredKeywordNames = filteredKeywords.map(k => k.keyword);
+            // Get today's date for comparison (YYYY-MM-DD format)
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
             
-            // Filter selections to only include those matching filtered keywords
-            const filteredSelections = selections.filter(s => filteredKeywordNames.includes(s.keyword));
+            // Helper to extract date from timestamp (format: "YYYY-MM-DD HH:MM:SS")
+            function getDateFromTimestamp(timestamp) {
+                if (!timestamp) return '';
+                return timestamp.split(' ')[0]; // Get "YYYY-MM-DD" part
+            }
             
-            // Total selections - show today's by default, filtered when filter applied
+            // Helper to check if selection is within date range
+            function isSelectionInDateRange(sel) {
+                const selDate = getDateFromTimestamp(sel.timestamp);
+                if (!selDate) return false;
+                
+                if (hasDateFilter) {
+                    // Apply date filter
+                    if (fromDateFilter && selDate < fromDateFilter) return false;
+                    if (toDateFilter && selDate > toDateFilter) return false;
+                    return true;
+                } else {
+                    // Default: show today's selections only
+                    return selDate === todayStr;
+                }
+            }
+            
+            // Total selections - show today's by default, filtered when date filter applied
             const totalSelectionsLabel = document.getElementById('totalSelectionsLabel');
-            if (hasFiltersApplied) {
-                document.getElementById('totalSelections').textContent = filteredSelections.length;
-                if (totalSelectionsLabel) totalSelectionsLabel.textContent = 'Filtered Selections';
-            } else {
-                document.getElementById('totalSelections').textContent = getTodaysSelectionsCount();
-                if (totalSelectionsLabel) totalSelectionsLabel.textContent = "Today's Selections";
+            const totalSelectionsCount = selections.filter(s => isSelectionInDateRange(s)).length;
+            document.getElementById('totalSelections').textContent = totalSelectionsCount;
+            if (totalSelectionsLabel) {
+                totalSelectionsLabel.textContent = hasDateFilter ? 'Filtered Selections' : "Today's Selections";
             }
             
-            // Your selections count (only for filtered keywords if filter applied, else today's)
-            let myCount;
-            if (hasFiltersApplied) {
-                myCount = filteredSelections.filter(s => s.user === currentUser?.name).length;
-            } else {
-                // Today's selections by current user
-                const today = new Date();
-                const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-                myCount = selections.filter(s => {
-                    if (s.user !== currentUser?.name) return false;
-                    if (!s.timestamp) return false;
-                    const selDate = new Date(s.timestamp);
-                    const selDateStr = `${selDate.getFullYear()}-${String(selDate.getMonth() + 1).padStart(2, '0')}-${String(selDate.getDate()).padStart(2, '0')}`;
-                    return selDateStr === todayStr;
-                }).length;
-            }
+            // Your selections count (filtered by date)
+            const myCount = selections.filter(s => 
+                s.user === currentUser?.name && isSelectionInDateRange(s)
+            ).length;
             document.getElementById('mySelections').textContent = myCount;
             
-            // Team selections count (only for filtered keywords if filter applied, else today's)
-            let teamCount;
-            if (hasFiltersApplied) {
-                teamCount = filteredSelections.filter(s => s.team === currentUser?.team).length;
-            } else {
-                // Today's selections by team
-                const today = new Date();
-                const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-                teamCount = selections.filter(s => {
-                    if (s.team !== currentUser?.team) return false;
-                    if (!s.timestamp) return false;
-                    const selDate = new Date(s.timestamp);
-                    const selDateStr = `${selDate.getFullYear()}-${String(selDate.getMonth() + 1).padStart(2, '0')}-${String(selDate.getDate()).padStart(2, '0')}`;
-                    return selDateStr === todayStr;
-                }).length;
+            // Update "Your Selections" label
+            const mySelectionsLabel = document.querySelector('#mySelections')?.parentElement?.querySelector('.stat-label');
+            if (mySelectionsLabel) {
+                mySelectionsLabel.textContent = hasDateFilter ? 'Your Filtered' : 'Your Today';
             }
+            
+            // Team selections count (filtered by date)
+            const teamCount = selections.filter(s => 
+                s.team === currentUser?.team && isSelectionInDateRange(s)
+            ).length;
             document.getElementById('teamSelections').textContent = teamCount;
             
-            // Update team name label
+            // Update team label
             const teamNameLabel = document.getElementById('teamNameLabel');
             if (teamNameLabel && currentUser?.team) {
-                teamNameLabel.textContent = currentUser.team;
+                const prefix = hasDateFilter ? '' : "Today's ";
+                teamNameLabel.textContent = `${prefix}${currentUser.team}`;
             }
         }
 
@@ -7447,23 +7421,51 @@ function getFilteredModalUsers() {
             const keywordsEl = document.getElementById('statsModalKeywords');
             const listEl = document.getElementById('statsModalList');
 
-            // Get filtered keywords for context
-            const filteredKeywords = getFilteredKeywords();
-            const filteredKeywordNames = filteredKeywords.map(k => k.keyword);
+            // Check if date filter is applied
+            const fromDateFilter = document.getElementById('filterFromDate')?.value || '';
+            const toDateFilter = document.getElementById('filterToDate')?.value || '';
+            const hasDateFilter = fromDateFilter !== '' || toDateFilter !== '';
             
-            // Filter selections based on type
+            // Get today's date for comparison (YYYY-MM-DD format)
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            
+            // Helper to extract date from timestamp (format: "YYYY-MM-DD HH:MM:SS")
+            function getDateFromTimestamp(timestamp) {
+                if (!timestamp) return '';
+                return timestamp.split(' ')[0]; // Get "YYYY-MM-DD" part
+            }
+            
+            // Helper to check if selection is within date range
+            function isSelectionInDateRange(sel) {
+                const selDate = getDateFromTimestamp(sel.timestamp);
+                if (!selDate) return false;
+                
+                if (hasDateFilter) {
+                    // Apply date filter
+                    if (fromDateFilter && selDate < fromDateFilter) return false;
+                    if (toDateFilter && selDate > toDateFilter) return false;
+                    return true;
+                } else {
+                    // Default: show today's selections only
+                    return selDate === todayStr;
+                }
+            }
+            
+            // Determine title based on filter
+            let dateLabel = hasDateFilter ? 'Filtered' : "Today's";
+            
+            // Filter selections based on type AND date
             let filteredSelections;
             if (type === 'your') {
-                titleEl.textContent = `Your Selections`;
+                titleEl.textContent = `${dateLabel} Your Selections`;
                 filteredSelections = selections.filter(s => 
-                    s.user === currentUser?.name && 
-                    filteredKeywordNames.includes(s.keyword)
+                    s.user === currentUser?.name && isSelectionInDateRange(s)
                 );
             } else if (type === 'team') {
-                titleEl.textContent = `Selections by ${currentUser?.team || 'Team'}`;
+                titleEl.textContent = `${dateLabel} Selections by ${currentUser?.team || 'Team'}`;
                 filteredSelections = selections.filter(s => 
-                    s.team === currentUser?.team && 
-                    filteredKeywordNames.includes(s.keyword)
+                    s.team === currentUser?.team && isSelectionInDateRange(s)
                 );
             }
 
@@ -7498,10 +7500,14 @@ function getFilteredModalUsers() {
             keywordsEl.textContent = groupedData.length;
 
             // Render list
+            const emptyMessage = hasDateFilter 
+                ? 'No selections found for the selected date range.'
+                : 'No selections made today.';
+            
             if (groupedData.length === 0) {
                 listEl.innerHTML = `
                     <div class="empty-state" style="padding: 2rem; text-align: center;">
-                        No selections found for the current filters.
+                        ${emptyMessage}
                     </div>
                 `;
             } else {
@@ -7548,6 +7554,9 @@ function getFilteredModalUsers() {
     </script>
 </body>
 </html>
+
+
+
 
 
 
