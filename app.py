@@ -1278,7 +1278,6 @@
 import eventlet
 eventlet.monkey_patch()
 
-
 import sys
 import io
 # Fix Windows console encoding for Unicode
@@ -1330,7 +1329,6 @@ if GOOGLE_CREDENTIALS_JSON:
     CREDS_FILE = "/tmp/google_credentials.json"
     with open(CREDS_FILE, "w") as f:
         f.write(GOOGLE_CREDENTIALS_JSON)
-
 
 # ------------------ Password Hashing ------------------
 def hash_password(password):
@@ -1423,6 +1421,23 @@ def init_database():
                 IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'google_trends_flags_keyword_team_key') THEN
                     ALTER TABLE google_trends_flags ADD CONSTRAINT google_trends_flags_keyword_team_key 
                         UNIQUE (keyword, team);
+                END IF;
+            EXCEPTION WHEN others THEN
+                NULL;
+            END $$;
+        """)
+        
+        # Migration: Add keyword_key to keyword_selections (unique per row so duplicate keywords get correct badges)
+        cur.execute("""
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                               WHERE table_name='keyword_selections' AND column_name='keyword_key') THEN
+                    ALTER TABLE keyword_selections ADD COLUMN keyword_key TEXT;
+                    UPDATE keyword_selections SET keyword_key = keyword WHERE keyword_key IS NULL;
+                    ALTER TABLE keyword_selections ALTER COLUMN keyword_key SET NOT NULL;
+                    ALTER TABLE keyword_selections DROP CONSTRAINT IF EXISTS keyword_selections_username_keyword_key;
+                    ALTER TABLE keyword_selections ADD CONSTRAINT keyword_selections_username_keyword_key_key UNIQUE (username, keyword_key);
                 END IF;
             EXCEPTION WHEN others THEN
                 NULL;
@@ -1584,26 +1599,25 @@ def db_remove_selection(username, keyword):
             conn.close()
 
 def db_get_all_selections():
-    """Get all selections from database"""
+    """Get all selections from database (includes keyword_key for row-specific badges)."""
     conn = None
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        
         cur.execute(
-            """SELECT username, team, keyword, selected_at 
+            """SELECT username, team, keyword, COALESCE(keyword_key, keyword) AS keyword_key, selected_at 
                FROM keyword_selections 
                ORDER BY selected_at DESC"""
         )
         rows = cur.fetchall()
-        
         selections = []
         for row in rows:
             selections.append({
                 "user": row[0],
                 "team": row[1],
                 "keyword": row[2],
-                "timestamp": to_pakistan_time(row[3])
+                "keyword_key": row[3],
+                "timestamp": to_pakistan_time(row[4])
             })
         return selections
         
@@ -1615,54 +1629,53 @@ def db_get_all_selections():
             cur.close()
             conn.close()
 
-def db_toggle_selection(username, team, keyword):
-    """Toggle selection in a single DB operation - returns (action, all_selections)"""
+def db_toggle_selection(username, team, keyword, keyword_key=None):
+    """Toggle selection in a single DB operation - returns (action, all_selections).
+    keyword_key uniquely identifies the row (e.g. keyword|date|time|id); if None, keyword is used (one per keyword text)."""
     global selections_cache
+    if keyword_key is None:
+        keyword_key = keyword
     conn = None
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        
-        # Check if exists and delete in one query
+        # Use keyword_key for lookups if column exists
         cur.execute(
-            "DELETE FROM keyword_selections WHERE username = %s AND keyword = %s RETURNING id",
-            (username, keyword)
+            """SELECT 1 FROM information_schema.columns 
+               WHERE table_name='keyword_selections' AND column_name='keyword_key'"""
         )
+        use_key = cur.fetchone() is not None
+        if use_key:
+            cur.execute(
+                "DELETE FROM keyword_selections WHERE username = %s AND keyword_key = %s RETURNING id",
+                (username, keyword_key)
+            )
+        else:
+            cur.execute(
+                "DELETE FROM keyword_selections WHERE username = %s AND keyword = %s RETURNING id",
+                (username, keyword)
+            )
         deleted = cur.fetchone()
         
         if deleted:
-            # Was deleted (deselected)
             action = "deselected"
         else:
-            # Didn't exist, so insert (select)
-            cur.execute(
-                "INSERT INTO keyword_selections (username, team, keyword) VALUES (%s, %s, %s)",
-                (username, team, keyword)
-            )
+            if use_key:
+                cur.execute(
+                    "INSERT INTO keyword_selections (username, team, keyword, keyword_key) VALUES (%s, %s, %s, %s)",
+                    (username, team, keyword, keyword_key)
+                )
+            else:
+                cur.execute(
+                    "INSERT INTO keyword_selections (username, team, keyword) VALUES (%s, %s, %s)",
+                    (username, team, keyword)
+                )
             action = "selected"
         
         conn.commit()
         
-        # Fetch updated selections in same connection
-        cur.execute(
-            """SELECT username, team, keyword, selected_at 
-               FROM keyword_selections 
-               ORDER BY selected_at DESC"""
-        )
-        rows = cur.fetchall()
-        
-        selections = []
-        for row in rows:
-            selections.append({
-                "user": row[0],
-                "team": row[1],
-                "keyword": row[2],
-                "timestamp": to_pakistan_time(row[3])
-            })
-        
-        # Update cache
+        selections = db_get_all_selections()
         selections_cache = selections
-        
         return action, selections
         
     except Exception as e:
@@ -2464,20 +2477,22 @@ def handle_keyword_selection(data):
     username = data.get('username')
     team = data.get('team')
     keyword = data.get('keyword')
+    keyword_key = data.get('keyword_key')  # unique row id (keyword|date|time|id) for correct badges on duplicate keywords
     
     if not username or not team or not keyword:
         return
+    if not keyword_key:
+        keyword_key = keyword  # backward compat: one selection per keyword text
     
-    # Toggle selection in ONE database call (much faster!)
-    action, selections = db_toggle_selection(username, team, keyword)
+    action, selections = db_toggle_selection(username, team, keyword, keyword_key=keyword_key)
     
-    # Broadcast to all clients
     emit('selection_update', {
         "selections": selections,
         "action": action,
         "user": username,
         "team": team,
-        "keyword": keyword
+        "keyword": keyword,
+        "keyword_key": keyword_key
     }, broadcast=True)
 
 @socketio.on('toggle_trends_flag')
@@ -2525,6 +2540,8 @@ if __name__ == '__main__':
     print("Starting Keyword Selection App...")
     print("Open http://localhost:5000 in your browser")
     socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+
+
 
 
 
