@@ -1,4 +1,7 @@
 <!-- 
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -857,9 +860,6 @@
             display: flex;
             align-items: flex-start;
             gap: 1rem;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
         }
         .keyword-checkbox:hover {
     border-color: #007bff;
@@ -1557,28 +1557,6 @@
             animation: pulse-hot 2s infinite;
         }
 
-
-        .keyword-info-flag {
-    margin-top: 10px;
-    padding-top: 8px;
-    border-top: 1px solid #eee;
-    font-size: 12px;
-    color: #868686;
-}
-
-
-.keyword-info-flag label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-}
-
-.keyword-info-flag input[type="checkbox"] {
-    cursor: pointer;
-}
-
-
         @keyframes pulse-hot {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
@@ -1586,7 +1564,7 @@
     </style>
 </head>
 <body>
-   
+    
     <header class="header">
         <div class="logo">SEO Suggested Keywords</div>
         <div class="header-actions">
@@ -1620,9 +1598,10 @@
         </div>
     </header>
 
+  
     <div class="auth-container" id="authSection">
         <div class="auth-card">
-          
+        
             <div id="loginForm">
                 <h2>Welcome Back</h2>
                 <p>Sign in to continue to the dashboard</p>
@@ -1661,7 +1640,7 @@
                 <p class="error-msg" id="loginError"></p>
             </div>
 
-            
+        
             <div id="forgotPasswordForm" class="hidden">
                 <h2>Reset Password</h2>
                 <p>Enter your username and team to verify identity</p>
@@ -1703,7 +1682,7 @@
                 <p class="success-msg" id="resetSuccess"></p>
             </div>
 
-        
+           
             <div id="registerForm" class="hidden">
                 <h2>Create Account</h2>
                 <p>Register to start selecting keywords</p>
@@ -1726,6 +1705,8 @@
                         <option value="Hungama">Hungama</option>
                         <option value="SEO">SEO</option>
                         <option value="Admin">Admin</option>
+                        <option value="YT">YouTube</option>
+                        
                     </select>
                 </div>
                 
@@ -1757,11 +1738,11 @@
         </div>
     </div>
 
-   
+
     <div class="container dashboard" id="dashboard">
     
         <section class="keywords-section">
-       
+         
             <div class="search-hero">
                 <div class="search-container">
                     <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1773,7 +1754,7 @@
                 </div>
             </div>
 
-  
+        
             <div class="filters-row">
                 <div class="filters-left">
                     <div class="filter-chip-group">
@@ -1811,7 +1792,7 @@
                 </div>
             </div>
 
-          
+ 
             <div class="stats-row">
                 <div class="stat-card-new">
                     <div class="stat-icon-box blue">📊</div>
@@ -1842,24 +1823,25 @@
                     </div>
                 </div>
             </div>
-            
+   
             <span id="totalCount" style="display:none;">0</span>
             
-      
+         
             <div class="keywords-grid" id="keywordsGrid">
-  
+             
             </div>
             
-
+          
             <div class="pagination-container" id="keywordsPagination">
-
+      
             </div>
         </section>
 
+     
         <section class="selections-section">
             <h2 class="section-title">Picked Keywords</h2>
             
-     
+        
             <div class="filter-bar">
                 <div class="filter-group">
                     <label>From:</label>
@@ -1913,7 +1895,7 @@
         </section>
     </div>
 
-
+ 
     <div class="toast" id="toast">
         <span class="toast-icon">✨</span>
         <span class="toast-message" id="toastMessage">Notification</span>
@@ -1939,12 +1921,12 @@
                 </div>
             </div>
             <div class="stats-modal-list" id="statsModalList">
-   
+               
             </div>
         </div>
     </div>
 
- 
+
     <div class="modal-overlay" id="keywordModal" onclick="closeModal(event)">
         <div class="modal" onclick="event.stopPropagation()">
             <div class="modal-header">
@@ -1964,7 +1946,7 @@
                 </div>
             </div>
             
-    
+      
             <div class="filter-bar" style="margin-bottom: 1rem;">
                 <div class="filter-group">
                     <label>From:</label>
@@ -1988,13 +1970,13 @@
             </div>
             
             <div class="modal-users-list" id="modalUsersList">
-              
+           
             </div>
         </div>
     </div>
 
 
-
+ 
     <div id="usersModal" class="modal-overlay">
         <div class="modal" style="max-width: 500px;">
             <div class="modal-header">
@@ -2021,7 +2003,6 @@
         let currentUser = null;
         let keywords = [];
         let selections = [];
-        let trendsFlags = {};  // Store Google Trends flags {keyword: {flagged_by, flagged_at}}
         let socket = null;
         let inactivityTimer = null;
         const INACTIVITY_TIMEOUT = 120 * 60 * 1000; // 30 minutes in milliseconds
@@ -2185,30 +2166,6 @@
                 }
                 
                 // Update keyword card selection state
-                renderKeywords();
-            });
-
-            socket.on('trends_flag_update', (data) => {
-                // Only process updates for the current user's team
-                if (!currentUser || data.team !== currentUser.team) {
-                    return; // Ignore updates from other teams
-                }
-                
-                // Update local trendsFlags cache
-                if (data.action === 'flagged' && data.flag_info) {
-                    trendsFlags[data.keyword] = data.flag_info;
-                } else {
-                    delete trendsFlags[data.keyword];
-                }
-                
-                // Show toast notification
-                if (data.action === 'flagged') {
-                    showToast(`${data.triggered_by} marked "${data.keyword}" as from Google Trends`, 'warning');
-                } else {
-                    showToast(`${data.triggered_by} removed the flag from "${data.keyword}"`, 'success');
-                }
-                
-                // Re-render to update UI
                 renderKeywords();
             });
 
@@ -2405,7 +2362,6 @@
             
             loadKeywords();
             loadSelections();
-            loadTrendsFlags();
             
             // Start auto-refresh (every 2 minutes)
             startAutoRefresh();
@@ -2482,22 +2438,6 @@
                 updateStats();
             } catch (err) {
                 console.error('Error loading selections:', err);
-            }
-        }
-
-        async function loadTrendsFlags() {
-            try {
-                // Only load flags for the current user's team
-                if (!currentUser || !currentUser.team) {
-                    trendsFlags = {};
-                    return;
-                }
-                const res = await fetch(`/api/trends-flags?team=${encodeURIComponent(currentUser.team)}`);
-                const data = await res.json();
-                trendsFlags = data.flags || {};
-                renderKeywords(); // Re-render to show flag status
-            } catch (err) {
-                console.error('Error loading trends flags:', err);
             }
         }
 
@@ -2780,33 +2720,57 @@
             grid.innerHTML = paginatedKeywords.map(kw => {
                 const isSelected = selections.some(s => s.user === currentUser?.name && s.keyword === kw.keyword);
                 const teamsSelected = getTeamsForKeyword(kw.keyword);
+                
+//                 // Generate team badges HTML
+//                 // const teamBadgesHTML = teamsSelected.length > 0 ? `
+//                 //     <div class="team-badges">
+//                 //         ${teamsSelected.map(team => {
+//                 //             const badge = getTeamBadge(team);
+//                 //             return `<span class="team-badge" style="background: ${badge.color};" title="Selected by ${team}">${badge.abbr}</span>`;
+//                 //         }).join('')}
+//                 //     </div>
+//                 // ` : '';
 
-                // Generate team badges with click event to open modal
-                const badgeSelections = selections.filter(s => s.keyword === kw.keyword);
+//                // Generate team badges with user names instead of team names
+// const badgeSelections = selections.filter(s => s.keyword === kw.keyword);
+// const teamBadgesHTML = badgeSelections.length > 0 ? `
+//     <div class="team-badges">
+//         ${badgeSelections.map(s => {
+//             const badge = getTeamBadge(s.team);
+//             return `<span class="team-badge" style="background: ${badge.color};" title="Selected by ${s.user}">${badge.abbr}</span>`;
+//         }).join('')}
+//     </div>
+// ` : '';
 
-                // Get unique teams that selected this keyword
-                const uniqueTeams = [...new Set(badgeSelections.map(s => s.team))];
 
-                const teamBadgesHTML = uniqueTeams.length > 0 ? `
-                    <div class="team-badges">
-                        ${uniqueTeams.map(team => {
-                            const badge = getTeamBadge(team);
-                            const teamUsers = badgeSelections.filter(s => s.team === team);
-                            const userNames = teamUsers.map(s => s.user).join(', ');
-                            // Store keyword in a data attribute to avoid string escaping issues
-                            return `<span 
-                                class="team-badge" 
-                                style="background: ${badge.color}; cursor:pointer; z-index:10;" 
-                                title="Selected by: ${userNames}"
-                                data-keyword="${encodeURIComponent(kw.keyword)}"
-                                data-team="${encodeURIComponent(team)}"
-                                onclick="event.stopPropagation(); openUserModalFromBadge(this)"
-                            >
-                                ${badge.abbr}
-                            </span>`;
-                        }).join('')}
-                    </div>
-                ` : '';
+
+
+// Generate team badges with click event to open modal
+const badgeSelections = selections.filter(s => s.keyword === kw.keyword);
+
+// Get unique teams that selected this keyword
+const uniqueTeams = [...new Set(badgeSelections.map(s => s.team))];
+
+const teamBadgesHTML = uniqueTeams.length > 0 ? `
+    <div class="team-badges">
+        ${uniqueTeams.map(team => {
+            const badge = getTeamBadge(team);
+            const teamUsers = badgeSelections.filter(s => s.team === team);
+            const userNames = teamUsers.map(s => s.user).join(', ');
+            // Store keyword in a data attribute to avoid string escaping issues
+            return `<span 
+                class="team-badge" 
+                style="background: ${badge.color}; cursor:pointer; z-index:10;" 
+                title="Selected by: ${userNames}"
+                data-keyword="${encodeURIComponent(kw.keyword)}"
+                data-team="${encodeURIComponent(team)}"
+                onclick="event.stopPropagation(); openUserModalFromBadge(this)"
+            >
+                ${badge.abbr}
+            </span>`;
+        }).join('')}
+    </div>
+` : '';
 
 
 
@@ -2829,37 +2793,7 @@
                                 ${kw.time ? `<span class="keyword-tag time">🕐 ${kw.time}</span>` : ''}
                             </div>
                         </div>
-            <div class="keyword-info-flag">
-                ${(() => {
-                    // Team-specific: one flag per keyword for your team
-                    const flag = trendsFlags[kw.keyword];
-                    
-                    if (flag) {
-                        // Your team has flagged this keyword
-                        return `<div class="flagged-info" style="color: var(--accent-warning); font-size: 0.85rem;">
-                            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                                <span style="font-size: 1rem;">⚠️</span>
-                                <span><strong>${flag.flagged_by}</strong> already picked this story from Google Trends</span>
-                                <button onclick="toggleTrendsFlag('${kw.keyword.replace(/'/g, "\\'")}', event)" 
-                                    style="background: none; border: 1px solid var(--accent-danger); color: var(--accent-danger); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; cursor: pointer; margin-left: auto;"
-                                    title="Remove flag">✕</button>
-                </div>
-            </div>`;
-        } else {
-            // No flag for your team yet
-            return `<label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                <input
-                    type="checkbox"
-                    onchange="toggleTrendsFlag('${kw.keyword.replace(/'/g, "\\'")}', event)"
-                    style="cursor: pointer;"
-                />
-                <span style="font-size: 0.85rem; color: var(--text-secondary);">This story is already picked from Google Trends</span>
-            </label>`;
-        }
-    })()}
-</div>
                     </div>
-                    
                 `;
             }).join('');
 
@@ -2867,26 +2801,12 @@
             renderPagination(totalPages, filteredKeywords.length);
         }
 
-
-        function toggleTrendsFlag(keyword, event) {
-            if (event) event.stopPropagation();
-            if (!currentUser || !currentUser.team) return;
-            
-            // Emit socket event to toggle the flag (team-specific)
-            socket.emit('toggle_trends_flag', {
-                username: currentUser.name,
-                keyword: keyword,
-                team: currentUser.team
-            });
-        }
-
-
 // --------------------------------------------------------------------------------------------------------------------------------------------
 function openUserModalFromBadge(element) {
     const keyword = decodeURIComponent(element.dataset.keyword);
     const team = decodeURIComponent(element.dataset.team);
     
-    // Find users who selected this keyword from this team
+    // Find users directly here
     const users = selections.filter(s => s.keyword === keyword && s.team === team);
     
     console.log('Badge clicked - Keyword:', keyword, 'Team:', team, 'Found:', users);
@@ -3174,7 +3094,7 @@ function getFilteredModalUsers() {
 //                     ${group.keyword}
 //                 </span>
 //             </td>
-//             
+//          
 //             <td>${teamBadgesHTML}</td>
 //             <td><span class="timestamp">${group.latestTime}</span></td>
 //         </tr>
@@ -3748,13 +3668,12 @@ function getFilteredModalUsers() {
         
     </script>
 </body>
-</html> -->
+</html>
 
 
 
 
-
-
+ -->
 
 
 
@@ -7576,6 +7495,7 @@ function getFilteredModalUsers() {
     </script>
 </body>
 </html>
+
 
 
 
