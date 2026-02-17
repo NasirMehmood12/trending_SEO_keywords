@@ -1,6 +1,7 @@
-
 # import eventlet
 # eventlet.monkey_patch()
+
+
 # import sys
 # import io
 # # Fix Windows console encoding for Unicode
@@ -43,11 +44,6 @@
 # cache_loaded = False
 
 # # ------------------ Google Sheets Configuration ------------------
-# # SHEET_ID = "1YeAVnMLPV5nfRE1hUbqyqmhXbBbcKzQC1JK86gPQEiY"
-# # CREDENTIALS_FILE = "credentials.json"
-
-
-
 # SHEET_ID = "1YeAVnMLPV5nfRE1hUbqyqmhXbBbcKzQC1JK86gPQEiY"
 # # CREDENTIALS_FILE = "credentials.json"
 # GOOGLE_CREDENTIALS_JSON = os.environ.get("GOOGLE_CREDENTIALS_PATH")
@@ -57,6 +53,7 @@
 #     CREDS_FILE = "/tmp/google_credentials.json"
 #     with open(CREDS_FILE, "w") as f:
 #         f.write(GOOGLE_CREDENTIALS_JSON)
+
 
 # # ------------------ Password Hashing ------------------
 # def hash_password(password):
@@ -115,30 +112,40 @@
 #         """)
         
 #         # Create Google Trends flags table - tracks who marked keywords as "already from Google Trends"
-#         # Multiple users can flag the same keyword
+#         # Team-specific: each team only sees their own flags
 #         cur.execute("""
 #             CREATE TABLE IF NOT EXISTS google_trends_flags (
 #                 id SERIAL PRIMARY KEY,
 #                 keyword TEXT NOT NULL,
 #                 flagged_by TEXT NOT NULL,
+#                 team TEXT NOT NULL DEFAULT '',
 #                 flagged_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-#                 UNIQUE (keyword, flagged_by)
+#                 UNIQUE (keyword, team)
 #             );
 #         """)
         
-#         # Migration: Drop old unique constraint and add new one (for existing databases)
+#         # Migration: Add team column and update constraints (for existing databases)
 #         cur.execute("""
 #             DO $$
 #             BEGIN
-#                 -- Drop old constraint if exists (single flag per keyword)
+#                 -- Add team column if not exists
+#                 IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+#                                WHERE table_name='google_trends_flags' AND column_name='team') THEN
+#                     ALTER TABLE google_trends_flags ADD COLUMN team TEXT NOT NULL DEFAULT '';
+#                 END IF;
+                
+#                 -- Drop old constraints
 #                 IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'google_trends_flags_keyword_key') THEN
 #                     ALTER TABLE google_trends_flags DROP CONSTRAINT google_trends_flags_keyword_key;
 #                 END IF;
+#                 IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'google_trends_flags_keyword_flagged_by_key') THEN
+#                     ALTER TABLE google_trends_flags DROP CONSTRAINT google_trends_flags_keyword_flagged_by_key;
+#                 END IF;
                 
-#                 -- Add new constraint (multiple flags per keyword, one per user)
-#                 IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'google_trends_flags_keyword_flagged_by_key') THEN
-#                     ALTER TABLE google_trends_flags ADD CONSTRAINT google_trends_flags_keyword_flagged_by_key 
-#                         UNIQUE (keyword, flagged_by);
+#                 -- Add new constraint (one flag per keyword per team)
+#                 IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'google_trends_flags_keyword_team_key') THEN
+#                     ALTER TABLE google_trends_flags ADD CONSTRAINT google_trends_flags_keyword_team_key 
+#                         UNIQUE (keyword, team);
 #                 END IF;
 #             EXCEPTION WHEN others THEN
 #                 NULL;
@@ -401,8 +408,8 @@
 # trends_flags_cache = {}
 # trends_cache_loaded = False
 
-# def db_get_all_trends_flags():
-#     """Get all Google Trends flags from database - returns {keyword: [list of flaggers]}"""
+# def db_get_trends_flags_for_team(team):
+#     """Get Google Trends flags for a specific team - returns {keyword: flag_info}"""
 #     conn = None
 #     try:
 #         conn = get_db_connection()
@@ -411,20 +418,20 @@
 #         cur.execute(
 #             """SELECT keyword, flagged_by, flagged_at 
 #                FROM google_trends_flags
-#                ORDER BY flagged_at DESC"""
+#                WHERE team = %s
+#                ORDER BY flagged_at DESC""",
+#             (team,)
 #         )
 #         rows = cur.fetchall()
         
-#         # Group flags by keyword - each keyword can have multiple flaggers
+#         # One flag per keyword per team
 #         flags = {}
 #         for row in rows:
-#             keyword = row[0]
-#             if keyword not in flags:
-#                 flags[keyword] = []
-#             flags[keyword].append({
+#             flags[row[0]] = {
 #                 "flagged_by": row[1],
-#                 "flagged_at": to_pakistan_time(row[2])
-#             })
+#                 "flagged_at": to_pakistan_time(row[2]),
+#                 "team": team
+#             }
 #         return flags
         
 #     except Exception as e:
@@ -435,68 +442,59 @@
 #             cur.close()
 #             conn.close()
 
-# def db_toggle_trends_flag(keyword, username):
-#     """Toggle Google Trends flag for a specific user - returns (action, all_flaggers_for_keyword)"""
-#     global trends_flags_cache
+# def db_toggle_trends_flag(keyword, username, team):
+#     """Toggle Google Trends flag for a team - one flag per keyword per team"""
 #     conn = None
 #     try:
 #         conn = get_db_connection()
 #         cur = conn.cursor()
         
-#         # Check if THIS USER already flagged this keyword
+#         # Check if this TEAM already flagged this keyword
 #         cur.execute(
-#             "DELETE FROM google_trends_flags WHERE keyword = %s AND flagged_by = %s RETURNING id",
-#             (keyword, username)
+#             "SELECT id, flagged_by FROM google_trends_flags WHERE keyword = %s AND team = %s",
+#             (keyword, team)
 #         )
-#         deleted = cur.fetchone()
+#         existing = cur.fetchone()
         
-#         if deleted:
-#             # User's flag was removed
-#             action = "unflagged"
-#         else:
-#             # User hasn't flagged yet, so add their flag
+#         if existing:
+#             # Team's flag exists - remove it
 #             cur.execute(
-#                 "INSERT INTO google_trends_flags (keyword, flagged_by) VALUES (%s, %s)",
-#                 (keyword, username)
+#                 "DELETE FROM google_trends_flags WHERE keyword = %s AND team = %s",
+#                 (keyword, team)
 #             )
+#             action = "unflagged"
+#             flag_info = None
+#         else:
+#             # Team hasn't flagged yet, so add their flag
+#             cur.execute(
+#                 "INSERT INTO google_trends_flags (keyword, flagged_by, team) VALUES (%s, %s, %s) RETURNING flagged_at",
+#                 (keyword, username, team)
+#             )
+#             flagged_at = cur.fetchone()[0]
 #             action = "flagged"
+#             flag_info = {
+#                 "flagged_by": username,
+#                 "flagged_at": to_pakistan_time(flagged_at),
+#                 "team": team
+#             }
         
 #         conn.commit()
         
-#         # Get all flaggers for this keyword
-#         cur.execute(
-#             """SELECT flagged_by, flagged_at 
-#                FROM google_trends_flags 
-#                WHERE keyword = %s
-#                ORDER BY flagged_at DESC""",
-#             (keyword,)
-#         )
-#         rows = cur.fetchall()
-        
-#         all_flaggers = [{"flagged_by": row[0], "flagged_at": to_pakistan_time(row[1])} for row in rows]
-        
-#         # Update cache
-#         if all_flaggers:
-#             trends_flags_cache[keyword] = all_flaggers
-#         else:
-#             trends_flags_cache.pop(keyword, None)
-        
-#         return action, all_flaggers, username
+#         return action, flag_info, team
         
 #     except Exception as e:
 #         print(f"[DB] Toggle trends flag error: {e}")
-#         return "error", [], username
+#         return "error", None, team
 #     finally:
 #         if conn:
 #             cur.close()
 #             conn.close()
 
 # def load_trends_flags_cache():
-#     """Load Google Trends flags into cache on startup"""
-#     global trends_flags_cache, trends_cache_loaded
-#     trends_flags_cache = db_get_all_trends_flags()
+#     """Note: Trends flags are now team-specific, loaded on demand per team"""
+#     global trends_cache_loaded
 #     trends_cache_loaded = True
-#     print(f"[Cache] Loaded {len(trends_flags_cache)} Google Trends flags")
+#     print(f"[Cache] Google Trends flags are team-specific (loaded per team request)")
 
 # # ------------------ Admin Database Functions ------------------
 # def db_get_all_users():
@@ -889,11 +887,14 @@
 
 # @app.route('/api/trends-flags', methods=['GET'])
 # def get_trends_flags():
-#     """Get all Google Trends flags"""
-#     global trends_flags_cache, trends_cache_loaded
-#     if not trends_cache_loaded:
-#         load_trends_flags_cache()
-#     return jsonify({"flags": trends_flags_cache})
+#     """Get Google Trends flags for a specific team"""
+#     team = request.args.get('team', '')
+#     if not team:
+#         return jsonify({"flags": {}, "error": "Team parameter required"})
+    
+#     # Fetch flags for this team only
+#     flags = db_get_trends_flags_for_team(team)
+#     return jsonify({"flags": flags, "team": team})
 
 # @app.route('/api/refresh-cache', methods=['POST'])
 # def refresh_cache():
@@ -1204,22 +1205,24 @@
 
 # @socketio.on('toggle_trends_flag')
 # def handle_trends_flag(data):
-#     """Handle toggling Google Trends flag for a keyword"""
+#     """Handle toggling Google Trends flag for a keyword (team-specific)"""
 #     username = data.get('username')
 #     keyword = data.get('keyword')
+#     team = data.get('team')
     
-#     if not username or not keyword:
+#     if not username or not keyword or not team:
 #         return
     
-#     # Toggle the flag (returns action, list of all flaggers, username who triggered)
-#     action, all_flaggers, triggered_by = db_toggle_trends_flag(keyword, username)
+#     # Toggle the flag for this team
+#     action, flag_info, flag_team = db_toggle_trends_flag(keyword, username, team)
     
-#     # Broadcast to all clients
+#     # Broadcast to all clients (clients will filter by their team)
 #     emit('trends_flag_update', {
 #         "keyword": keyword,
 #         "action": action,
-#         "flaggers": all_flaggers,  # List of all users who flagged this keyword
-#         "triggered_by": triggered_by  # Who triggered this update
+#         "flag_info": flag_info,  # Flag info (or None if unflagged)
+#         "team": flag_team,  # Team that flagged/unflagged
+#         "triggered_by": username
 #     }, broadcast=True)
 
 # @socketio.on('refresh_keywords')
@@ -1245,22 +1248,6 @@
 #     print("Starting Keyword Selection App...")
 #     print("Open http://localhost:5000 in your browser")
 #     socketio.run(app, debug=True, host='0.0.0.0', port=5000)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -2540,12 +2527,4 @@ if __name__ == '__main__':
     print("Starting Keyword Selection App...")
     print("Open http://localhost:5000 in your browser")
     socketio.run(app, debug=True, host='0.0.0.0', port=5000)
-
-
-
-
-
-
-
-
 
