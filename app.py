@@ -1280,11 +1280,8 @@
 
 
 
-
-
 import eventlet
 eventlet.monkey_patch()
-
 import sys
 import io
 # Fix Windows console encoding for Unicode
@@ -1316,7 +1313,8 @@ def to_pakistan_time(dt):
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-change-this-in-production'
 CORS(app)
-socketio = SocketIO(app, cors_allowed_origins="*")
+# manage_session=False avoids Flask 3.x error: "property 'session' of 'RequestContext' object has no setter"
+socketio = SocketIO(app, cors_allowed_origins="*", manage_session=False)
 
 # ------------------ Database Configuration ------------------
 DB_URL = "postgresql://neondb_owner:npg_7SjyKhDinEv8@ep-young-term-a5zyo5in-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require"
@@ -1330,7 +1328,6 @@ cache_loaded = False
 # SHEET_ID = "1YeAVnMLPV5nfRE1hUbqyqmhXbBbcKzQC1JK86gPQEiY"
 # CREDENTIALS_FILE = "credentials.json"
 
-
 SHEET_ID = "1YeAVnMLPV5nfRE1hUbqyqmhXbBbcKzQC1JK86gPQEiY"
 # CREDENTIALS_FILE = "credentials.json"
 GOOGLE_CREDENTIALS_JSON = os.environ.get("GOOGLE_CREDENTIALS_PATH")
@@ -1340,6 +1337,7 @@ if GOOGLE_CREDENTIALS_JSON:
     CREDS_FILE = "/tmp/google_credentials.json"
     with open(CREDS_FILE, "w") as f:
         f.write(GOOGLE_CREDENTIALS_JSON)
+
 
 # ------------------ Password Hashing ------------------
 def hash_password(password):
@@ -2611,8 +2609,10 @@ if __name__ == '__main__':
     print("Open http://localhost:5000 in your browser")
     socketio.run(app, debug=True, host='0.0.0.0', port=5000)
 
+    
 
         
+
 
 
 
