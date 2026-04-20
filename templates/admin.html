@@ -1,4 +1,6 @@
-<!-- <!DOCTYPE html>
+<!-- 
+
+<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
@@ -784,7 +786,7 @@
     </style>
 </head>
 <body>
- 
+   
     <div class="login-overlay" id="loginOverlay">
         <div class="login-box">
             <h1>🔐 Admin Login</h1>
@@ -796,9 +798,9 @@
         </div>
     </div>
 
-  
+   
     <div class="dashboard" id="dashboard">
-       
+    
         <header class="header">
             <div class="header-left">
                 <h1>📊 <span>Admin</span> Dashboard</h1>
@@ -812,7 +814,7 @@
         </header>
 
         <div class="container">
-          
+
             <div class="filters-row">
                 <div class="filter-group">
                     <label>📅 From:</label>
@@ -826,7 +828,7 @@
                     <label>👥 Team:</label>
                     <select id="filterTeam">
                         <option value="">All Teams</option>
-                     
+                  
                         <option value="Data">Data</option>
                         <option value="GEO">GEO</option>
                         <option value="The News">The News</option>
@@ -837,13 +839,14 @@
                         <option value="Hungama">Hungama</option>
                         <option value="SEO">SEO</option>
 
-                     
+                  
                     </select>
                 </div>
                 <button class="apply-btn" onclick="applyFilters()">Apply Filters</button>
                 <button class="clear-btn" onclick="clearFilters()">✕ Clear Filters</button>
             </div>
 
+        
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-icon blue">👥</div>
@@ -865,9 +868,14 @@
                     <div class="stat-value" id="topUserName">-</div>
                     <div class="stat-label">Top User</div>
                 </div>
+                <div class="stat-card clickable" onclick="openFlaggedClicksModal()" title="Authors who clicked &quot;Already picked from Google Trends&quot;">
+                    <div class="stat-icon orange">⚠️</div>
+                    <div class="stat-value" id="flaggedClicksCount">0</div>
+                    <div class="stat-label">Flagged Clicks</div>
+                </div>
             </div>
 
-           
+         
             <div class="seo-section">
                 <h2 class="section-title">📝 SEO Performance <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 400;" id="seoDateRange">(Today)</span></h2>
                 <div class="seo-cards-grid" id="seoCardsGrid">
@@ -878,7 +886,7 @@
                 </div>
             </div>
 
-        
+           
             <div class="charts-grid">
                 <div class="chart-card">
                     <h3>📊 Selections by Team</h3>
@@ -893,6 +901,7 @@
                     </div>
                 </div>
             </div>
+
 
             <div class="charts-grid">
                 <div class="chart-card">
@@ -909,7 +918,7 @@
                 </div>
             </div>
 
-     
+        
             <div class="users-section">
                 <div class="section-header">
                     <h2>👥 All Users</h2>
@@ -941,7 +950,7 @@
         </div>
     </div>
 
-
+  
     <div class="modal-overlay" id="userModal">
         <div class="modal">
             <div class="modal-header">
@@ -978,6 +987,22 @@
         </div>
     </div>
 
+ 
+    <div class="modal-overlay" id="seoDetailModal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>
+                    <span id="seoModalAvatar" class="avatar">S</span>
+                    <span id="seoModalTitle">SEO Performance</span>
+                </h2>
+                <button class="modal-close" onclick="closeSeoDetailModal()">✕</button>
+            </div>
+            <div class="modal-body" id="seoDetailModalBody">
+    
+            </div>
+        </div>
+    </div>
+
 
     <div class="modal-overlay" id="todayModal">
         <div class="modal" style="max-width: 900px;">
@@ -1008,7 +1033,7 @@
                     </div>
                     <select id="todayTeamFilter" onchange="filterTodaySelections()" style="padding: 0.5rem; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary);">
                         <option value="">All Teams</option>
-                  
+         
                     </select>
                 </div>
                 
@@ -1027,6 +1052,57 @@
                                 <td colspan="4" class="loading">
                                     <div class="spinner"></div>
                                     Loading today's selections...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal-overlay" id="flaggedClicksModal">
+        <div class="modal" style="max-width: 900px;">
+            <div class="modal-header">
+                <h2>⚠️ Flagged Clicks – Already Picked Stories</h2>
+                <button class="modal-close" onclick="closeFlaggedClicksModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">Authors who marked a keyword as &quot;Already picked from Google Trends&quot;.</p>
+                <div class="user-detail-stats" style="margin-bottom: 1rem;">
+                    <div class="user-detail-stat">
+                        <div class="value" id="flaggedTotalCount">0</div>
+                        <div class="label">Total Flags</div>
+                    </div>
+                    <div class="user-detail-stat">
+                        <div class="value" id="flaggedUniqueKeywords">0</div>
+                        <div class="label">Unique Keywords</div>
+                    </div>
+                    <div class="user-detail-stat">
+                        <div class="value" id="flaggedUniqueUsers">0</div>
+                        <div class="label">Unique Users</div>
+                    </div>
+                </div>
+                <div class="search-box" style="margin-bottom: 1rem;">
+                    <span>🔍</span>
+                    <input type="text" id="flaggedSearch" placeholder="Search by user, words, or team..." oninput="filterFlaggedTable()">
+                </div>
+                <div style="max-height: 400px; overflow-y: auto;">
+                    <table class="users-table" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Who</th>
+                                <th>Team</th>
+                                <th>Keyword</th>
+                                <th>When</th>
+                            </tr>
+                        </thead>
+                        <tbody id="flaggedClicksBody">
+                            <tr>
+                                <td colspan="4" class="loading">
+                                    <div class="spinner"></div>
+                                    Loading...
                                 </td>
                             </tr>
                         </tbody>
@@ -1154,20 +1230,24 @@
         // Load Dashboard Data
         async function loadDashboardData() {
             await Promise.all([
-                loadStats(),
+                loadStats(),  // This also loads flagged clicks with date filters
                 loadUsers(),
                 loadSeoStats()
             ]);
         }
 
+        let flaggedClicksData = [];
+
         async function loadStats() {
             const fromDate = document.getElementById('filterFromDate').value;
             const toDate = document.getElementById('filterToDate').value;
+            const team = document.getElementById('filterTeam').value;
             
             let url = '/api/admin/stats';
             const params = new URLSearchParams();
             if (fromDate) params.append('from_date', fromDate);
             if (toDate) params.append('to_date', toDate);
+            if (team) params.append('team', team);
             if (params.toString()) url += '?' + params.toString();
 
             try {
@@ -1214,11 +1294,13 @@
         async function loadSeoStats() {
             const fromDate = document.getElementById('filterFromDate').value;
             const toDate = document.getElementById('filterToDate').value;
+            const team = document.getElementById('filterTeam').value;
             
             let url = '/api/admin/seo-stats';
             const params = new URLSearchParams();
             if (fromDate) params.append('from_date', fromDate);
             if (toDate) params.append('to_date', toDate);
+            if (team) params.append('team', team);
             if (params.toString()) url += '?' + params.toString();
 
             try {
@@ -1343,15 +1425,17 @@
                 </div>
             `;
             
-            // Use existing modal structure
-            document.getElementById('modalUserName').textContent = `${seoName} - SEO Stats`;
-            document.getElementById('modalUserAvatar').textContent = seoName.charAt(0).toUpperCase();
-            document.getElementById('modalUserAvatar').style.background = color;
+            // Use dedicated SEO modal (do not reuse userModal so user details modal keeps its structure)
+            document.getElementById('seoModalTitle').textContent = `${seoName} - SEO Stats`;
+            document.getElementById('seoModalAvatar').textContent = seoName.charAt(0).toUpperCase();
+            document.getElementById('seoModalAvatar').style.background = color;
             
-            const modalBody = document.querySelector('#userModal .modal-body');
-            modalBody.innerHTML = content;
-            
-            document.getElementById('userModal').classList.add('active');
+            document.getElementById('seoDetailModalBody').innerHTML = content;
+            document.getElementById('seoDetailModal').classList.add('active');
+        }
+
+        function closeSeoDetailModal() {
+            document.getElementById('seoDetailModal').classList.remove('active');
         }
 
         function updateStatsCards(stats) {
@@ -1381,6 +1465,14 @@
             // Top user
             if (stats.top_users && stats.top_users.length > 0) {
                 document.getElementById('topUserName').textContent = stats.top_users[0].username;
+            }
+            // Flagged clicks (included in /api/admin/stats from db_get_admin_stats)
+            const flaggedEl = document.getElementById('flaggedClicksCount');
+            if (flaggedEl) {
+                const count = stats.flagged_clicks_count ?? 0;
+                const flags = stats.flagged_clicks || [];
+                flaggedEl.textContent = String(count);
+                flaggedClicksData = Array.isArray(flags) ? flags : [];
             }
         }
 
@@ -1677,6 +1769,60 @@
             document.getElementById('todayTeamFilter').value = '';
         }
 
+        // Flagged Clicks Modal
+        async function openFlaggedClicksModal() {
+            const modal = document.getElementById('flaggedClicksModal');
+            modal.classList.add('active');
+            const tbody = document.getElementById('flaggedClicksBody');
+            tbody.innerHTML = '<tr><td colspan="4" class="loading"><div class="spinner"></div>Loading...</td></tr>';
+
+            // Data comes from /api/admin/stats (same request as the rest of the dashboard)
+            document.getElementById('flaggedTotalCount').textContent = flaggedClicksData.length;
+            document.getElementById('flaggedUniqueKeywords').textContent = new Set((flaggedClicksData || []).map(f => f.keyword)).size;
+            document.getElementById('flaggedUniqueUsers').textContent = new Set((flaggedClicksData || []).map(f => f.flagged_by)).size;
+            renderFlaggedClicksTable(flaggedClicksData || []);
+        }
+
+        function renderFlaggedClicksTable(flags) {
+            const tbody = document.getElementById('flaggedClicksBody');
+            if (!flags || flags.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="empty-state"><div class="empty-state-icon">📭</div>No flagged clicks yet</td></tr>';
+                return;
+            }
+            tbody.innerHTML = flags.map(f => `
+                <tr>
+                    <td>
+                        <div class="user-info">
+                            <div class="avatar">${(f.flagged_by || '').charAt(0).toUpperCase()}</div>
+                            <span>${f.flagged_by || '-'}</span>
+                        </div>
+                    </td>
+                    <td><span class="team-tag">${f.team || '-'}</span></td>
+                    <td style="max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${(f.keyword || '').replace(/"/g, '&quot;')}">${f.keyword || '-'}</td>
+                    <td style="color: var(--text-secondary); font-size: 0.85rem;">${f.flagged_at || '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function filterFlaggedTable() {
+            const search = document.getElementById('flaggedSearch').value.toLowerCase();
+            if (!search) {
+                renderFlaggedClicksTable(flaggedClicksData);
+                return;
+            }
+            const filtered = flaggedClicksData.filter(f =>
+                (f.flagged_by || '').toLowerCase().includes(search) ||
+                (f.team || '').toLowerCase().includes(search) ||
+                (f.keyword || '').toLowerCase().includes(search)
+            );
+            renderFlaggedClicksTable(filtered);
+        }
+
+        function closeFlaggedClicksModal() {
+            document.getElementById('flaggedClicksModal').classList.remove('active');
+            document.getElementById('flaggedSearch').value = '';
+        }
+
         // User Modal
         async function openUserModal(username) {
             const modal = document.getElementById('userModal');
@@ -1742,6 +1888,12 @@
             }
         });
 
+        document.getElementById('seoDetailModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeSeoDetailModal();
+            }
+        });
+
         // Enter key for login
         document.getElementById('adminPassword').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') adminLogin();
@@ -1754,6 +1906,12 @@
 </body>
 </html>
  -->
+
+
+
+
+
+
 
 
 
@@ -2648,18 +2806,34 @@
                 </div>
             </div>
 
-            <!-- Charts -->
+            <!-- Comparison Chart -->
             <div class="charts-grid">
                 <div class="chart-card">
-                    <h3>📊 Selections by Team</h3>
+                    <h3>📊 Selections vs Flagged Keywords</h3>
                     <div class="chart-container">
-                        <canvas id="teamChart"></canvas>
+                        <canvas id="comparisonChart"></canvas>
                     </div>
                 </div>
                 <div class="chart-card">
                     <h3>📈 Daily Selection Trend</h3>
                     <div class="chart-container">
                         <canvas id="dailyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team Charts -->
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h3>🥧 Selections by Team</h3>
+                    <div class="chart-container">
+                        <canvas id="teamChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h3>📅 Flagged by Team</h3>
+                    <div class="chart-container">
+                        <canvas id="flaggedTeamChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -2882,6 +3056,8 @@
         let dailyChart = null;
         let keywordsChart = null;
         let usersChart = null;
+        let comparisonChart = null;
+        let flaggedTeamChart = null;
 
         // Theme handling
         function initTheme() {
@@ -3243,6 +3419,52 @@
             const textColor = isDark ? '#a0a0b0' : '#4a4a5a';
             const gridColor = isDark ? '#2a2a3a' : '#d0d5dd';
 
+            // Comparison Chart (Selections vs Flagged) - Bar Chart
+            const comparisonCtx = document.getElementById('comparisonChart').getContext('2d');
+            if (comparisonChart) comparisonChart.destroy();
+            
+            const selectionsCount = stats.total_selections || 0;
+            const flaggedCount = stats.flagged_clicks_count || 0;
+            
+            comparisonChart = new Chart(comparisonCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Keyword Selections', 'Flagged (Google Trends)'],
+                    datasets: [{
+                        label: 'Count',
+                        data: [selectionsCount, flaggedCount],
+                        backgroundColor: ['#00d4aa', '#f0b429'],
+                        borderRadius: 8,
+                        barThickness: 60
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.y + ' items';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: textColor, font: { size: 12 } },
+                            grid: { display: false }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: textColor },
+                            grid: { color: gridColor }
+                        }
+                    }
+                }
+            });
+
             // Team Chart (Doughnut)
             const teamCtx = document.getElementById('teamChart').getContext('2d');
             if (teamChart) teamChart.destroy();
@@ -3254,6 +3476,41 @@
                     labels: stats.team_stats?.map(t => t.team) || [],
                     datasets: [{
                         data: stats.team_stats?.map(t => t.count) || [],
+                        backgroundColor: teamColors,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { color: textColor }
+                        }
+                    }
+                }
+            });
+
+            // Flagged by Team Chart (Doughnut)
+            const flaggedTeamCtx = document.getElementById('flaggedTeamChart').getContext('2d');
+            if (flaggedTeamChart) flaggedTeamChart.destroy();
+            
+            // Aggregate flagged clicks by team
+            const flaggedByTeam = {};
+            (stats.flagged_clicks || []).forEach(f => {
+                const team = f.team || 'Unknown';
+                flaggedByTeam[team] = (flaggedByTeam[team] || 0) + 1;
+            });
+            const flaggedTeamLabels = Object.keys(flaggedByTeam);
+            const flaggedTeamData = Object.values(flaggedByTeam);
+            
+            flaggedTeamChart = new Chart(flaggedTeamCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: flaggedTeamLabels,
+                    datasets: [{
+                        data: flaggedTeamData,
                         backgroundColor: teamColors,
                         borderWidth: 0
                     }]
@@ -3667,4 +3924,5 @@
     </script>
 </body>
 </html>
+
 
