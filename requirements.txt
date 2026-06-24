@@ -1,4 +1,4 @@
-psycopg2
+psycopg2-binary
 cloudinary
 selenium
 requests
@@ -15,9 +15,8 @@ flask
 flask-socketio
 flask-cors
 gspread
-
 oauth2client
 gunicorn
-eventlet
+eventlet>=0.35.0,<0.42.0
 
 
